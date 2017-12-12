@@ -61,7 +61,7 @@ We will create an **Azure Container Registry** to store the images generated dur
     </tr>
     <tr>
       <td><a href="http://bit.ly/2ALhdES"><b>AKS</b></a> <img src="images/app_service.png" width="30px"> </td>
-      <td>Docker images are deployed to containers inside pods running in AKS</td>
+      <td>Docker images are deployed to pods running in AKS</td>
     </tr>
     <tr>
       <td><a href="http://bit.ly/2AINQ5x"><b>SQL Database</b></a> <img src="images/app_service_plan.png" width="30px"> </td>
@@ -238,7 +238,7 @@ Since the connections are not established during project provisioning, we will m
 
    <img src="images/pasteconnectionstring.png">
 
-## Exercise 3: Add secret in AKS (in progress...)
+## Exercise 3: Add secret in AKS (Editing and images are pending)
 
 1. To access Azure Container Registry from AKS, you need to create a secret. From commandline, use **az login** to access your azure account 
 
