@@ -29,26 +29,21 @@ Below screenshot helps you understand the VSTS DevOps workflow with Docker:
 
 We will create an **Azure Container Registry** to store the images generated during VSTS build. These images contain environment configuration details with build settings.  An **AKS** is created where custom built images will be deployed to run inside containers. A **SQL Database** is created as the backend.   
 
-1. Click on **Deploy to Azure** to spin up **Azure Container Registry**, **AKS** and **SQL Web Service**.
+1. Click on **Deploy to Azure** to spin up **Azure Container Registry**, **AKS** and **SQL Database** (Note: This ARM Template is not yet complete).
 
    <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FMicrosoft%2FVSTS-DevOps-Labs%2Fdocker%2Fdocker%2Ftemplates%2Fazuredeploy.json" target="_blank">
 
     <img src="http://azuredeploy.net/deploybutton.png"/>
     </a> 
 
-   <br/>
-
-   <img src="images/createacr-linuxwebapp.png">
-
+   
 2. It takes approximately **3 to 4 minutes** to provision the environment. 
 
    <img src="images/acrdeploymentsucceeded.png">
 
 3. Below components are created post deployment. Click on **Azure Container Registry**.
 
-   <img src="images/postazuredeployment.png">
-
-    
+      
     <table width="100%">
      <thead>
       <tr>
@@ -243,13 +238,59 @@ Since the connections are not established during project provisioning, we will m
 
    <img src="images/pasteconnectionstring.png">
 
-## Exercise 3: Add secret in AKS
+## Exercise 3: Add secret in AKS (in progress...)
+
+1. To access Azure Container Registry from AKS, you need to create a secret. From commandline, use **az login** to access your azure account 
+
+2. To connect to the Kubernetes cluster from your computer, use **kubectl**, the Kubernetes command-line client.
+
+    For installing it locally, run the following command:
+
+    >az aks install-cli
+
+**Connect with kubectl:**
+
+To configure kubectl to connect to your Kubernetes cluster, run the following command:
 
 
+>az aks get-credentials --resource-group=myResourceGroup --name=myK8sCluster
+
+
+
+>kubectl create secret docker-registry SECRET_NAME --docker-server=REGISTRY_NAME.azurecr.io --docker-username=USERNAME --docker-password=PASSWORD --docker-email=ANY_VALID_EMAIL
+
+
+**Create a secret called as acrconnection**
+
+Get the current configuration of the ServiceAccount
+
+>kubectl get serviceaccounts default -o yaml > ./serviceaccount.yml
+
+Add below line to the end of the **serviceaccount.yml** file:
+
+>imagePullSecrets: </br>
+-name: acrconnection
+
+Replace the current configuration of the ServiceAccount with this new one:
+>kubectl replace serviceaccount default -f ./serviceaccount.yml
+
+Now when we deploy images located in our Azure Container Registry, the images can be pulled by Kubernetes.
+
+**To access AKS through browser:**
+
+>az aks browse --resource-group AKS-RG1 --name aks
+
+<img src="images/aksbrowse.png">
+
+</br>
+
+**AKS Dashboard:**
+
+<img src="images/aksdashboard.png">
 
 ## Exercise 4: Code update
 
-We will update the code to trigger CI-CD. **Docker Daemon** installed in **Hosted VSTS agent** is used to build and deploy custom images to containers. 
+We will update the code to trigger CI-CD. As per instructions mentioned in **mhc-aks.yml** file the required Pods and Services are created in AKS. Our application is deployed behind a loadbalancer with the Redis cache.
 
 1. Go to **Code** tab, and navigate to the below path to edit the file- 
 
@@ -257,11 +298,11 @@ We will update the code to trigger CI-CD. **Docker Daemon** installed in **Hoste
 
    <img src="images/editcode.png">
 
-2. Go to line number **28**, update **JOIN US** to **JOIN US TODAY**, and click **Commit**.
+2. Go to line number **28**, update **JOIN US** to **JOIN US!!!**, and click **Commit**.
 
     <img src="images/lineedit.png">
 
-3. Go to **Builds** tab to see the CI build in-progress.
+3. Go to **Builds** tab to see the CI build in progress.
 
     <img src="images/in_progress_build.png">
 
@@ -270,25 +311,27 @@ We will update the code to trigger CI-CD. **Docker Daemon** installed in **Hoste
     <img src="images/build_summary.png">
    
 
-5. Go to **Releases** tab to see the CD in-progress.
+5. Go to **Releases** tab to see the release summary.
 
-    <img src="images/release_in_progress.png">
+    <img src="images/releasesummary.png">
 
-6.  The release will deploy the image to App Service and you will see the release summary with logs as shown.
+6. Go to commandline and run below command to see the pods:
 
-    <img src="images/release_summary.png">
+    >kubectl get pods
 
-    <br/>
-
-    <img src="images/release_logs.png">
-
-7. Go to <a href="https://portal.azure.com">Azure Portal</a>, navigate to the **App Service** which was created at the beginning of this lab. Click on the **URL** to see the changes in your app.
-
-    <img src="images/getwebappurl.png">
+    <img src="images/getpods.png">
 
     <br/> 
 
-    <img src="images/finalresult.png">
+8. To get the IP address, run below command. If you see that External-IP is pending, wait for a while until an IP is assigned.
+
+    >kubectl get service azure-vote-front --watch
+
+<img src="images/watchfront.png">
+ 
+9. Copy External-IP and paste it in your browser.
+
+<img src="images/endresult.png">
 
 8. To see the generated images in Azure Portal, go to **Azure Container Registry** and navigate to **Repositories**.
 
@@ -297,7 +340,7 @@ We will update the code to trigger CI-CD. **Docker Daemon** installed in **Hoste
 
 ## Summary
 
-With **Visual Studio Team Services** and **Azure**, we can build DevOps for dockerized applications.
+With **Visual Studio Team Services** and **Azure Container Services (AKS)**, we can build DevOps for dockerized applications.
 
 ## Feedback
 
